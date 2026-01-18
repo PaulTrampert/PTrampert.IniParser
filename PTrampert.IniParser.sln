@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PTrampert.IniParser", "PTrampert.IniParser\PTrampert.IniParser.csproj", "{3F7C53D5-D563-492D-B631-B97E54E76623}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PTrampert.IniParser.Test", "PTrampert.IniParser.Test\PTrampert.IniParser.Test.csproj", "{E2C0E8D0-FEF1-4581-8BA2-AAE34908F54E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{3F7C53D5-D563-492D-B631-B97E54E76623}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F7C53D5-D563-492D-B631-B97E54E76623}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F7C53D5-D563-492D-B631-B97E54E76623}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F7C53D5-D563-492D-B631-B97E54E76623}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E2C0E8D0-FEF1-4581-8BA2-AAE34908F54E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E2C0E8D0-FEF1-4581-8BA2-AAE34908F54E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E2C0E8D0-FEF1-4581-8BA2-AAE34908F54E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E2C0E8D0-FEF1-4581-8BA2-AAE34908F54E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
