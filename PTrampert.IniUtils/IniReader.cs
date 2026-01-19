@@ -9,8 +9,8 @@ namespace PTrampert.IniUtils;
 
 public class IniReader(IniOptions options)
 {
-    private Regex sectionRegex = new Regex(@"^\[([^\]]+)\]$", RegexOptions.Compiled);
-    private Regex keyValueRegex = new Regex(@"^([^=]+)=(.*)$", RegexOptions.Compiled);
+    private static readonly Regex SectionRegex = new(@"^\[([^\]]+)\]$", RegexOptions.Compiled);
+    private static readonly Regex KeyValueRegex = new("^([^=]+)=(.*)$", RegexOptions.Compiled);
     
     public async Task<IniFile> ReadAsync(TextReader reader, IniSection? rootSection = null)
     {
@@ -26,7 +26,7 @@ public class IniReader(IniOptions options)
                 continue;
             }
             
-            var sectionMatch = sectionRegex.Match(line);
+            var sectionMatch = SectionRegex.Match(line);
             if (sectionMatch.Success)
             {
                 var sectionName = sectionMatch.Groups[1].Value.Trim();
@@ -39,7 +39,7 @@ public class IniReader(IniOptions options)
                 continue;
             }
 
-            var keyValueMatch = keyValueRegex.Match(line);
+            var keyValueMatch = KeyValueRegex.Match(line);
             if (keyValueMatch.Success)
             {
                 var key = keyValueMatch.Groups[1].Value.Trim();
