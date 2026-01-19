@@ -1,10 +1,4 @@
-using System;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using PTrampert.IniUtils;
-
-namespace PTrampert.IniParser.Test;
+namespace PTrampert.IniUtils.Test;
 
 [TestFixture]
 public class IniReaderTests
