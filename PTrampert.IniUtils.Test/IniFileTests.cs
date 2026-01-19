@@ -1,7 +1,3 @@
-using System.Linq;
-using NUnit.Framework;
-using PTrampert.IniUtils;
-
 namespace PTrampert.IniUtils.Test
 {
     [TestFixture]
