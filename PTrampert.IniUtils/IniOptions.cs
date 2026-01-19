@@ -16,12 +16,22 @@ public class IniOptions
     /// </summary>
     public bool KeepEmptyValues { get; set; }
     
+    /// <summary>
+    /// Default options for windows-style INI files.
+    /// * CommentCharacter: ';'
+    /// * KeepEmptyValues: false
+    /// </summary>
     public static IniOptions WindowsDefaults => new IniOptions
     {
         CommentCharacter = ';',
         KeepEmptyValues = false
     };
     
+    /// <summary>
+    /// Default options for linux-style INI files.
+    /// * CommentCharacter: '#'
+    /// * KeepEmptyValues: false
+    /// </summary>
     public static IniOptions LinuxDefaults => new IniOptions
     {
         CommentCharacter = '#',
