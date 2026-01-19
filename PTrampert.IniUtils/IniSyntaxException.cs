@@ -2,10 +2,19 @@ using System;
 
 namespace PTrampert.IniUtils;
 
+/// <summary>
+/// Thrown when a syntax error is encountered while parsing an INI file.
+/// </summary>
 public class IniSyntaxException : Exception
 {
+    /// <summary>
+    /// Create a new IniSyntaxException.
+    /// </summary>
+    /// <param name="lineNumber">Line number the error occurred at.</param>
+    /// <param name="lineContent">The content of the line.</param>
+    /// <param name="filePath">The file the error occurred in, if a file.</param>
     public IniSyntaxException(int lineNumber, string lineContent, string? filePath)
-        : base($"Invalid INI syntax{FileMessasgeClause(filePath)} at line {lineNumber}: '{lineContent}'")
+        : base($"Syntax error{FileMessasgeClause(filePath)} at line {lineNumber}: '{lineContent}'")
     {
     }
 
