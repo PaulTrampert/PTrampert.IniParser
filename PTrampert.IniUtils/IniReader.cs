@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -14,12 +15,31 @@ public class IniReader(IniOptions options) : IIniReader
 {
     private static readonly Regex SectionRegex = new(@"^\[([^\]]+)\]$", RegexOptions.Compiled);
     private static readonly Regex KeyValueRegex = new("^([^=]+)=(.*)$", RegexOptions.Compiled);
-
+    
+    private readonly HashSet<string> _currentFiles = new();
+    private readonly Stack<string> _fileStack = new();
+    
     /// <inheritdoc/>
     public async Task<IniFile> ReadAsync(string filePath, IniSection? rootSection = null)
     {
-        await using var stream = File.OpenRead(filePath);
-        return await ReadAsync(stream, rootSection);
+        var fullPath = Path.GetFullPath(filePath);
+        if (!_currentFiles.Add(fullPath))
+        {
+            throw new InvalidOperationException($"Circular include detected for file '{filePath}'");
+        }
+        _fileStack.Push(fullPath);
+        
+        try
+        {
+            await using var stream = File.OpenRead(filePath);
+            var result = await ReadAsync(stream, rootSection);
+            return result;
+        }
+        finally
+        {
+            _currentFiles.Remove(fullPath);
+            _fileStack.Pop();
+        }
     }
     
     /// <inheritdoc/>
@@ -69,6 +89,23 @@ public class IniReader(IniOptions options) : IIniReader
                     continue;
                 }
                 
+                if (key == options.IncludesKey)
+                {
+                    var includePath = value;
+                    if (!Path.IsPathRooted(includePath) && _fileStack.Count > 0)
+                    {
+                        var baseDirectory = Path.GetDirectoryName(_fileStack.Peek());
+                        if (!string.IsNullOrEmpty(baseDirectory))
+                        {
+                            includePath = Path.Combine(baseDirectory, includePath);
+                        }
+                    }
+
+                    var includedFile = await ReadAsync(includePath);
+                    file.Include(includedFile);
+                    continue;
+                }
+                
                 if (!currentSection.KeyValues.TryGetValue(key, out var values))
                 {
                     values = Array.Empty<string>();
@@ -79,7 +116,7 @@ public class IniReader(IniOptions options) : IIniReader
                 
                 continue;
             }
-            throw new FormatException($"Syntax error at line {lineNumber}: '{line}'");
+            throw new IniSyntaxException(lineNumber, line, _fileStack.Count > 0 ? _fileStack.Peek() : null);
         }
         
         return file;

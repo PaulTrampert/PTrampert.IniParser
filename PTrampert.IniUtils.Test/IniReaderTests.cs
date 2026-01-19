@@ -1,4 +1,3 @@
-using System.IO;
 using System.Text;
 
 namespace PTrampert.IniUtils.Test;
@@ -383,9 +382,9 @@ invalid line without equals
 key2=value2";
         var reader = new StringReader(content);
         var iniReader = new IniReader(_defaultOptions);
-        
+
         // Act & Assert
-        var ex = Assert.ThrowsAsync<FormatException>(async () => await iniReader.ReadAsync(reader));
+        var ex = Assert.ThrowsAsync<IniSyntaxException>(async () => await iniReader.ReadAsync(reader));
         Assert.That(ex.Message, Does.Contain("Syntax error at line 2"));
         Assert.That(ex.Message, Does.Contain("invalid line without equals"));
     }
@@ -517,4 +516,72 @@ key1=value2";
         Assert.That(rootSection.KeyValues.ContainsKey("key1"), Is.True);
         Assert.That(rootSection.KeyValues["key1"].First(), Is.EqualTo("value1"));
     }
+
+    [Test]
+    public async Task ReadAsync_WhenIncludesKeyIsSet_ProcessesIncludeDirectives()
+    {
+        // Arrange: create a temporary directory with main and included INI files
+        var tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDir);
+        var includedFileName = "included.ini";
+        var includedPath = Path.Combine(tempDir, includedFileName);
+        var mainPath = Path.Combine(tempDir, "main.ini");
+
+        try
+        {
+            // included file contains a simple key/value that should be merged into the main file
+            await File.WriteAllTextAsync(includedPath, "incKey=incValue", Encoding.UTF8);
+
+            // main file references the include using the configured IncludesKey with an absolute path
+            var mainContent = $"key1=value1\ninclude={includedPath}\nkey2=value2";
+            await File.WriteAllTextAsync(mainPath, mainContent, Encoding.UTF8);
+
+            var options = new IniOptions { IncludesKey = "include" };
+            var iniReader = new IniReader(options);
+
+            // Act
+            var result = await iniReader.ReadAsync(mainPath);
+
+            // Assert: the included key should be present in the resulting data as if it appeared in place
+            var root = result.Sections[""];
+            Assert.That(root.KeyValues.ContainsKey("key1"), Is.True);
+            Assert.That(root.KeyValues.ContainsKey("incKey"), Is.True, "Included file's key should be present");
+            Assert.That(root.KeyValues.ContainsKey("key2"), Is.True);
+            Assert.That(root.KeyValues["incKey"].First(), Is.EqualTo("incValue"));
+        }
+        finally
+        {
+            // Cleanup
+            Directory.Delete(tempDir, true);
+        }
+    }
+
+    [Test]
+    public async Task ReadAsync_CircularInclude_ThrowsInvalidOperationException()
+    {
+        // Arrange: create two files that include each other
+        var tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDir);
+        var aPath = Path.Combine(tempDir, "a.ini");
+        var bPath = Path.Combine(tempDir, "b.ini");
+
+        try
+        {
+            // a includes b, and b includes a
+            await File.WriteAllTextAsync(aPath, $"include={bPath}", Encoding.UTF8);
+            await File.WriteAllTextAsync(bPath, $"include={aPath}", Encoding.UTF8);
+
+            var options = new IniOptions { IncludesKey = "include" };
+            var iniReader = new IniReader(options);
+
+            // Act & Assert
+            var ex = Assert.ThrowsAsync<InvalidOperationException>(async () => await iniReader.ReadAsync(aPath));
+            Assert.That(ex.Message, Does.Contain("Circular include detected"));
+        }
+        finally
+        {
+            Directory.Delete(tempDir, true);
+        }
+    }
 }
+
