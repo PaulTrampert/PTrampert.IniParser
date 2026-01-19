@@ -6,6 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
+        <RootNamespace>PTrampert.IniParser.Test</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
@@ -21,7 +22,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\PTrampert.IniParser\PTrampert.IniParser.csproj" />
+      <ProjectReference Include="..\PTrampert.IniUtils\PTrampert.IniUtils.csproj" />
     </ItemGroup>
 
 </Project>

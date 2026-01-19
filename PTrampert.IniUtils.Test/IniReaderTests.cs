@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using PTrampert.IniParser;
+using PTrampert.IniUtils;
 
 namespace PTrampert.IniParser.Test;
 
