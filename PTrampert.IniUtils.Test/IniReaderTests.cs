@@ -517,4 +517,43 @@ key1=value2";
         Assert.That(rootSection.KeyValues.ContainsKey("key1"), Is.True);
         Assert.That(rootSection.KeyValues["key1"].First(), Is.EqualTo("value1"));
     }
+
+    [Test]
+    public async Task ReadAsync_WhenIncludesKeyIsSet_ProcessesIncludeDirectives()
+    {
+        // Arrange: create a temporary directory with main and included INI files
+        var tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        Directory.CreateDirectory(tempDir);
+        var includedFileName = "included.ini";
+        var includedPath = Path.Combine(tempDir, includedFileName);
+        var mainPath = Path.Combine(tempDir, "main.ini");
+
+        try
+        {
+            // included file contains a simple key/value that should be merged into the main file
+            await File.WriteAllTextAsync(includedPath, "incKey=incValue", Encoding.UTF8);
+
+            // main file references the include using the configured IncludesKey (relative path)
+            var mainContent = $"key1=value1\ninclude={includedFileName}\nkey2=value2";
+            await File.WriteAllTextAsync(mainPath, mainContent, Encoding.UTF8);
+
+            var options = new IniOptions { IncludesKey = "include" };
+            var iniReader = new IniReader(options);
+
+            // Act
+            var result = await iniReader.ReadAsync(mainPath);
+
+            // Assert: the included key should be present in the resulting data as if it appeared in place
+            var root = result.Sections[""];
+            Assert.That(root.KeyValues.ContainsKey("key1"), Is.True);
+            Assert.That(root.KeyValues.ContainsKey("incKey"), Is.True, "Included file's key should be present");
+            Assert.That(root.KeyValues.ContainsKey("key2"), Is.True);
+            Assert.That(root.KeyValues["incKey"].First(), Is.EqualTo("incValue"));
+        }
+        finally
+        {
+            // Cleanup
+            try { Directory.Delete(tempDir, true); } catch { /* ignore cleanup errors */ }
+        }
+    }
 }

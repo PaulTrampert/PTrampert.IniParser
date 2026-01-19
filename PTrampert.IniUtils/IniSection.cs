@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace PTrampert.IniUtils;
 
@@ -19,4 +21,30 @@ public class IniSection
     /// preserving the order in which they were read from the INI file.
     /// </summary>
     public Dictionary<string, IEnumerable<string>> KeyValues { get; } = new();
+
+    /// <summary>
+    /// Merge another IniSection into this one. Keys from the other section
+    /// will be added to this section. If a key already exists, the values
+    /// from the other section will be merged in.
+    /// </summary>
+    /// <param name="other">The other section to merge into this one.</param>
+    public void Include(IniSection other)
+    {
+        if (this.Name != other.Name)
+        {
+            throw new ArgumentException("Cannot include section with different name", nameof(other));
+        }
+
+        foreach (var key in other.KeyValues.Keys)
+        {
+            if (this.KeyValues.TryGetValue(key, out var values))
+            {
+                KeyValues[key] = values.Union(other.KeyValues[key]);
+            }
+            else
+            {
+                KeyValues.Add(key, other.KeyValues[key]);
+            }
+        }
+    }
 }
