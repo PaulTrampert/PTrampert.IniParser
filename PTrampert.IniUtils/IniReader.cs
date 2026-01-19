@@ -35,7 +35,7 @@ public class IniReader(IniOptions options) : IIniReader
     /// <returns>An IniFile object representing the file contents.</returns>
     public async Task<IniFile> ReadAsync(Stream stream, IniSection? rootSection = null)
     {
-        using var reader = new StreamReader(stream);
+        using var reader = new StreamReader(stream, leaveOpen: true);
         return await ReadAsync(reader, rootSection);
     }
     
