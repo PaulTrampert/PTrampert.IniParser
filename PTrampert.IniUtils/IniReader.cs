@@ -10,7 +10,7 @@ namespace PTrampert.IniUtils;
 /// Reader for INI files.
 /// </summary>
 /// <param name="options">Options to use when reading an INI file.</param>
-public class IniReader(IniOptions options)
+public class IniReader(IniOptions options) : IIniReader
 {
     private static readonly Regex SectionRegex = new(@"^\[([^\]]+)\]$", RegexOptions.Compiled);
     private static readonly Regex KeyValueRegex = new("^([^=]+)=(.*)$", RegexOptions.Compiled);
