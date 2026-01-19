@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Antlr4.Runtime.Tree;
 
-namespace PTrampert.IniParser;
+namespace PTrampert.IniUtils;
 
 internal class IniTreeVisitor : IniGrammarBaseVisitor<IniFile>
 {
