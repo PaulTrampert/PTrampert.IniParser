@@ -52,7 +52,7 @@ public class IniReader(IniOptions options)
                 
                 if (!currentSection.KeyValues.TryGetValue(key, out var values))
                 {
-                    values = new List<string>();
+                    values = Array.Empty<string>();
                     currentSection.KeyValues.Add(key, values);
                 }
 
