@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -8,7 +9,8 @@ namespace PTrampert.IniUtils;
 
 public class IniReader(IniOptions options)
 {
-    private Regex sectionRegex = new Regex(@"^\[([^\]]+)\]$", RegexOptions.Compiled);
+    private static readonly Regex SectionRegex = new(@"^\[([^\]]+)\]$", RegexOptions.Compiled);
+    private static readonly Regex KeyValueRegex = new("^([^=]+)=(.*)$", RegexOptions.Compiled);
     
     public async Task<IniFile> ReadAsync(TextReader reader, IniSection? rootSection = null)
     {
@@ -24,7 +26,7 @@ public class IniReader(IniOptions options)
                 continue;
             }
             
-            var sectionMatch = sectionRegex.Match(line);
+            var sectionMatch = SectionRegex.Match(line);
             if (sectionMatch.Success)
             {
                 var sectionName = sectionMatch.Groups[1].Value.Trim();
@@ -37,28 +39,25 @@ public class IniReader(IniOptions options)
                 continue;
             }
 
-            if (line.Contains('='))
+            var keyValueMatch = KeyValueRegex.Match(line);
+            if (keyValueMatch.Success)
             {
-                var keyValue = line.Split('=', 2, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(x => x.Trim())
-                    .ToArray();
+                var key = keyValueMatch.Groups[1].Value.Trim();
+                var value = keyValueMatch.Groups[2].Value.Trim();
 
-                if (keyValue.Length >= 1)
+                if (string.IsNullOrEmpty(value) && !options.KeepEmptyValues)
                 {
-                    var key = keyValue[0];
-                    var value = keyValue.Length == 2 ? keyValue[1] : null;
-
-                    if (!currentSection.KeyValues.TryGetValue(key, out var values))
-                    {
-                        values = Array.Empty<string>();
-                    }
-
-                    if (value != null)
-                    {
-                        currentSection.KeyValues[key] = values.Append(value);
-                    }
+                    continue;
+                }
+                
+                if (!currentSection.KeyValues.TryGetValue(key, out var values))
+                {
+                    values = Array.Empty<string>();
+                    currentSection.KeyValues.Add(key, values);
                 }
 
+                currentSection.KeyValues[key] = values.Append(value);
+                
                 continue;
             }
             throw new FormatException($"Invalid line in INI file: '{line}'");
