@@ -16,6 +16,30 @@ public class IniReader(IniOptions options)
     private static readonly Regex KeyValueRegex = new("^([^=]+)=(.*)$", RegexOptions.Compiled);
 
     /// <summary>
+    /// Read an INI file from the given file path, optionally overriding the root section.
+    /// </summary>
+    /// <param name="filePath">The location of the ini file.</param>
+    /// <param name="rootSection">The starting current section. If not provided, the root section will be "".</param>
+    /// <returns>An IniFile object representing the file contents.</returns>
+    public async Task<IniFile> ReadAsync(string filePath, IniSection? rootSection = null)
+    {
+        using var stream = File.OpenRead(filePath);
+        return await ReadAsync(stream, rootSection);
+    }
+    
+    /// <summary>
+    /// Create a new IniFile from the given Stream, optionally overriding the root section.
+    /// </summary>
+    /// <param name="stream">The stream to read INI contents from.</param>
+    /// <param name="rootSection">The starting current section. If not provided, the root section will be "".</param>
+    /// <returns>An IniFile object representing the file contents.</returns>
+    public async Task<IniFile> ReadAsync(Stream stream, IniSection? rootSection = null)
+    {
+        using var reader = new StreamReader(stream);
+        return await ReadAsync(reader, rootSection);
+    }
+    
+    /// <summary>
     /// Create a new IniFile from the given TextReader, optionally overriding the root section.
     /// </summary>
     /// <param name="reader">The reader to read INI contents from.</param>
