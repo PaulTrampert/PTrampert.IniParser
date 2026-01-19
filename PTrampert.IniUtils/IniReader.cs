@@ -17,6 +17,7 @@ public class IniReader(IniOptions options) : IIniReader
     private static readonly Regex KeyValueRegex = new("^([^=]+)=(.*)$", RegexOptions.Compiled);
     
     private readonly HashSet<string> _currentFiles = new();
+    private readonly Stack<string> _fileStack = new();
     
     /// <inheritdoc/>
     public async Task<IniFile> ReadAsync(string filePath, IniSection? rootSection = null)
@@ -26,11 +27,19 @@ public class IniReader(IniOptions options) : IIniReader
         {
             throw new InvalidOperationException($"Circular include detected for file '{filePath}'");
         }
+        _fileStack.Push(fullPath);
         
-        await using var stream = File.OpenRead(filePath);
-        var result = await ReadAsync(stream, rootSection);
-        _currentFiles.Remove(fullPath);
-        return result;
+        try
+        {
+            await using var stream = File.OpenRead(filePath);
+            var result = await ReadAsync(stream, rootSection);
+            return result;
+        }
+        finally
+        {
+            _currentFiles.Remove(fullPath);
+            _fileStack.Pop();
+        }
     }
     
     /// <inheritdoc/>
@@ -97,7 +106,7 @@ public class IniReader(IniOptions options) : IIniReader
                 
                 continue;
             }
-            throw new FormatException($"Syntax error at line {lineNumber}: '{line}'");
+            throw new IniSyntaxException(lineNumber, line, _fileStack.Count > 0 ? _fileStack.Peek() : null);
         }
         
         return file;

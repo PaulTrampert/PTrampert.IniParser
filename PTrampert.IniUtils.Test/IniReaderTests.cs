@@ -384,7 +384,7 @@ key2=value2";
         var iniReader = new IniReader(_defaultOptions);
 
         // Act & Assert
-        var ex = Assert.ThrowsAsync<FormatException>(async () => await iniReader.ReadAsync(reader));
+        var ex = Assert.ThrowsAsync<IniSyntaxException>(async () => await iniReader.ReadAsync(reader));
         Assert.That(ex.Message, Does.Contain("Syntax error at line 2"));
         Assert.That(ex.Message, Does.Contain("invalid line without equals"));
     }
