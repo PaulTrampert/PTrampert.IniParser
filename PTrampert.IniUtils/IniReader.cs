@@ -15,7 +15,7 @@ public class IniReader(IniOptions options) : IIniReader
 {
     private static readonly Regex SectionRegex = new(@"^\[([^\]]+)\]$", RegexOptions.Compiled);
     private static readonly Regex KeyValueRegex = new("^([^=]+)=(.*)$", RegexOptions.Compiled);
-    
+
     private readonly HashSet<string> _currentFiles = new();
     private readonly Stack<string> _fileStack = new();
 
@@ -27,8 +27,9 @@ public class IniReader(IniOptions options) : IIniReader
         {
             throw new InvalidOperationException($"Circular include detected for file '{filePath}'");
         }
+
         _fileStack.Push(fullPath);
-        
+
         try
         {
             await using var stream = File.OpenRead(filePath);
@@ -41,14 +42,14 @@ public class IniReader(IniOptions options) : IIniReader
             _fileStack.Pop();
         }
     }
-    
+
     /// <inheritdoc/>
     public async Task<IniFile> ReadAsync(Stream stream, IniSection? rootSection = null)
     {
         var reader = new StreamReader(stream);
         return await ReadAsync(reader, rootSection);
     }
-    
+
     /// <inheritdoc/>
     public async Task<IniFile> ReadAsync(TextReader reader, IniSection? rootSection = null)
     {
@@ -64,43 +65,11 @@ public class IniReader(IniOptions options) : IIniReader
             {
                 continue;
             }
-            
-            var sectionMatch = SectionRegex.Match(line);
-            if (sectionMatch.Success)
-            {
-                var sectionName = sectionMatch.Groups[1].Value.Trim();
-                if (!file.Sections.TryGetValue(sectionName, out var section))
-                {
-                    section = new IniSection { Name = sectionName };
-                    file.Sections[sectionName] = section;
-                }
-                currentSection = section;
-                continue;
-            }
 
-            var keyValueMatch = KeyValueRegex.Match(line);
-            if (keyValueMatch.Success)
-            {
-                var key = keyValueMatch.Groups[1].Value.Trim();
-                var value = keyValueMatch.Groups[2].Value.Trim();
-
-                await ProcessKeyValueAsync(file, currentSection, key, value);
-                continue;
-            }
-
-            // If no '=' was found, and the option allows it, treat the whole line as a key with an empty value.
-            if (options.AllowKeyWithoutEquals && !line.Contains('='))
-            {
-                var key = line.Trim();
-                var value = string.Empty;
-
-                await ProcessKeyValueAsync(file, currentSection, key, value);
-
-                continue;
-            }
-            throw new IniSyntaxException(lineNumber, line, _fileStack.Count > 0 ? _fileStack.Peek() : null);
+            // process the trimmed, non-empty, non-comment line using a helper
+            currentSection = await ProcessLineAsync(file, currentSection, line, lineNumber);
         }
-        
+
         return file;
     }
 
@@ -137,5 +106,50 @@ public class IniReader(IniOptions options) : IIniReader
         }
 
         currentSection.KeyValues[key] = values.Append(value);
+    }
+
+    // Helper: get existing section or create and add it
+    private IniSection GetOrAddSection(IniFile file, string sectionName)
+    {
+        if (!file.Sections.TryGetValue(sectionName, out var section))
+        {
+            section = new IniSection { Name = sectionName };
+            file.Sections[sectionName] = section;
+        }
+
+        return section;
+    }
+
+    // Helper: process a non-empty, non-comment line and return the (possibly updated) current section
+    private async Task<IniSection> ProcessLineAsync(IniFile file, IniSection currentSection, string line,
+        int lineNumber)
+    {
+        var sectionMatch = SectionRegex.Match(line);
+        if (sectionMatch.Success)
+        {
+            var sectionName = sectionMatch.Groups[1].Value.Trim();
+            return GetOrAddSection(file, sectionName);
+        }
+
+        var keyValueMatch = KeyValueRegex.Match(line);
+        if (keyValueMatch.Success)
+        {
+            var key = keyValueMatch.Groups[1].Value.Trim();
+            var value = keyValueMatch.Groups[2].Value.Trim();
+
+            await ProcessKeyValueAsync(file, currentSection, key, value);
+            return currentSection;
+        }
+
+        if (options.AllowKeyWithoutEquals && !line.Contains('='))
+        {
+            var key = line.Trim();
+            var value = string.Empty;
+
+            await ProcessKeyValueAsync(file, currentSection, key, value);
+            return currentSection;
+        }
+
+        throw new IniSyntaxException(lineNumber, line, _fileStack.Count > 0 ? _fileStack.Peek() : null);
     }
 }
