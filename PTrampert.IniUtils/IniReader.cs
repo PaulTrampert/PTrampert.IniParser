@@ -143,7 +143,7 @@ public class IniReader(IniOptions options) : IIniReader
 
         if (options.AllowKeyWithoutEquals && !line.Contains('='))
         {
-            var key = line.Trim();
+            var key = line;
             var value = string.Empty;
 
             await ProcessKeyValueAsync(file, currentSection, key, value);
